@@ -1131,6 +1131,43 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
     if (tgt) { e.preventDefault(); tgt.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
   });
 });
+
+/* CALL BUTTONS ON DESKTOP: copy number instead of triggering a calling-app picker */
+(function () {
+  const isDesktop = !window.matchMedia('(pointer: coarse)').matches && window.innerWidth > 900;
+  if (!isDesktop) return;
+
+  const toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);background:var(--bg3,#111916);color:var(--mint,#6EE7A0);border:1px solid var(--mint-dim,#3DB870);padding:12px 22px;border-radius:40px;font-size:.85rem;font-weight:600;letter-spacing:.02em;z-index:9999;opacity:0;transition:opacity .25s ease, transform .25s ease;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.4);';
+  document.body.appendChild(toast);
+  let hideTimer;
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateX(-50%) translateY(0)';
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(-50%) translateY(20px)';
+    }, 2600);
+  }
+
+  document.querySelectorAll('a[href^="tel:"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const number = a.getAttribute('href').replace('tel:', '');
+      const formatted = number.replace(/^1?(\d{3})(\d{3})(\d{4})$/, '($1) $2-$3');
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(formatted).then(
+          () => showToast('📋 Copied ' + formatted + ' — call or text from your phone'),
+          () => showToast('📞 Call us at ' + formatted)
+        );
+      } else {
+        showToast('📞 Call us at ' + formatted);
+      }
+    });
+  });
+})();
 </script>
 </body>
 </html>
